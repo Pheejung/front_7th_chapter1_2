@@ -154,41 +154,51 @@ Phase 1 (반복 타입) ─→ Phase 2 (반복 표시) ─→ Phase 3 (종료/�
 
 ---
 
-## 🎯 성공 메트릭
+## 🎯 성공 메트릭 (기획 관점 - 기능 완성도)
 
-- ✅ Phase 1 테스트 커버리지 80% 이상
-- ✅ 엣지 케이스(31일/윤년) 100% 커버
-- ✅ 수정/삭제 시 사용자 선택 UI 명확성 (UX 테스트)
-- ✅ 반복 일정 1000개 생성 시 성능 < 2초
+**기능이 성공적으로 작동하는가?**
+
+- ✅ Phase 1 테스트 커버리지 80% 이상 (반복 타입 선택 기능의 신뢰성)
+- ✅ 엣지 케이스(31일/윤년) 100% 테스트 (특수 규칙 완벽 구현)
+- ✅ 수정/삭제 시 사용자 선택 UI 명확성 (사용자 혼동 최소화)
+- ✅ 반복 일정 1000개 생성 시 성능 < 2초 (사용성)
 
 ---
 
-## 📝 다음 단계 (BMAD 에이전트 워크플로우)
+## 📝 BMAD 에이전트 워크플로우 (다음 단계)
 
 ```
 1. ✅ 기획 에이전트 (Spec & Signal Curator)
    └─ 반복 일정 기능 명세서 작성 완료
 
-2. → 계획 에이전트 (Work Decomposer & Planner)
-   └─ 태스크 DAG & 스프린트 계획 작성
+2. ✅ 계획 에이전트 (Work Decomposer & Planner)
+   └─ 태스크 DAG & 스프린트 계획 작성 완료
 
 3. → 아키텍트 에이전트 (Repo & Context Orchestrator)
-   ├─ 기존 코드 구조 분석
-   ├─ 관련 파일 매핑
-   └─ Context Brief & 테스트 자산 가이드 작성
+   ├─ 기존 코드 구조 분석 (useEventOperations, EventForm 등)
+   ├─ 관련 파일 매핑 (src/utils/*, src/hooks/*, src/components/*)
+   ├─ 테스트 자산 매핑 (MSW handlers, fixtures, test utilities)
+   └─ Context Brief 문서 생성
 
 4. → 개발 에이전트 (Implementation Executor)
-   ├─ Task별 RED/GREEN/REFACTOR 사이클
-   ├─ 테스트 먼저 작성 (TDD)
-   └─ 한번에 하나의 기능만 완성
+   ├─ Task R-001 RED: 반복 타입 유틸 테스트 작성
+   ├─ Task R-001 GREEN: 반복 타입 유틸 구현
+   ├─ Task R-001 REFACTOR: 엣지 케이스 추가 테스트
+   ├─ Task R-004 RED: 반복 아이콘 함수 테스트
+   ├─ Task R-004 GREEN: 반복 아이콘 함수 구현
+   └─ ... (이후 모든 Task에 대해 RED/GREEN/REFACTOR 반복)
 
 5. → QA 에이전트 (QA & Automation Sentinel)
-   ├─ 자동 테스트 파이프라인 실행
-   ├─ 품질 게이트 검증
-   └─ 실패 분류 및 피드백
+   ├─ 모든 테스트 파이프라인 실행 (Unit → Integration → E2E)
+   ├─ 테스트 커버리지 검증 (70% 이상)
+   ├─ 실패 테스트 분류 (회귀/환경/flaky)
+   └─ 품질 게이트 결과 리포트
 
 6. → 배포 에이전트 (Release & Feedback Synthesizer)
-   ├─ 배포 준비 및 실행
-   ├─ 모니터링 및 피드백 수집
-   └─ 피드백을 기획 에이전트(1단계)로 전달
+   ├─ QA 승인 후 배포 준비
+   ├─ 배포 전 스모크 테스트 실행
+   ├─ 배포 및 모니터링
+   ├─ 사용자 피드백 수집
+   └─ 피드백을 기획 에이전트(1단계)로 전달 (다음 사이클)
 ```
+
