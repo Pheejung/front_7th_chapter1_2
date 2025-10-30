@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type { RepeatInfo, RepeatType } from '../../types';
 
-import type { RepeatInfo } from '../../types';
 import { getRepeatIcon, validateRepeatInfo } from '../../utils/repeatUtils';
 
 /**
@@ -112,13 +112,13 @@ describe('Task R-002 GREEN: 반복 일정 기능 확장', () => {
       expect(typeof getRepeatIcon).toBe('function');
     });
 
-    // 반복 타입별 아이콘 테스트 (매개변수화)
-    const iconTestCases = [
+    // 반복 타입별 아이콘 테스트 (매개변수화) — 리터럴 유니온 유지
+    const iconTestCases = ([
       { type: 'daily', description: 'daily 반복' },
       { type: 'weekly', description: 'weekly 반복' },
       { type: 'monthly', description: 'monthly 반복' },
       { type: 'yearly', description: 'yearly 반복' },
-    ];
+    ] as const) satisfies ReadonlyArray<{ type: Exclude<RepeatType, 'none'>; description: string }>;
 
     iconTestCases.forEach(({ description, type }) => {
       it(`getRepeatIcon는 ${description}에 대한 아이콘을 반환해야 한다`, () => {
@@ -131,7 +131,7 @@ describe('Task R-002 GREEN: 반복 일정 기능 확장', () => {
 
     it('getRepeatIcon는 다양한 반복 타입마다 다른 아이콘을 반환해야 한다', () => {
       // Arrange
-      const repeatTypes = ['daily', 'weekly', 'monthly', 'yearly'];
+      const repeatTypes = (['daily', 'weekly', 'monthly', 'yearly'] as const) satisfies ReadonlyArray<Exclude<RepeatType, 'none'>>;
 
       // Act & Assert
       const icons = repeatTypes.map((type) => getRepeatIcon(type));

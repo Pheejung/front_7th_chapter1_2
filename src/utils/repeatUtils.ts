@@ -3,29 +3,39 @@
  * Task R-001: 반복 타입 검증 및 반복 일정 생성 로직
  */
 
-import { RepeatType, RepeatInfo } from '../types';
+import type { RepeatType, RepeatInfo } from '../types';
 
+// ───────────────────────────────────────────────────────────────────────────────
 // 상수
+// ───────────────────────────────────────────────────────────────────────────────
 const VALID_REPEAT_TYPES: RepeatType[] = ['daily', 'weekly', 'monthly', 'yearly', 'none'];
 const MINUTES_PER_HOUR = 60;
 const WEEKS_PER_ITERATION = 7;
 const MONTHS_PER_YEAR = 12;
-const FEBRUARY_MONTH = 1;
+const FEBRUARY_MONTH = 1; // 0=Jan, 1=Feb
 const LEAP_DAY_DATE = 29;
 
+// 아이콘 매핑(타입 안전)
+const ICONS = {
+  daily: '📅',
+  weekly: '🔄',
+  monthly: '📆',
+  yearly: '🗓️',
+  none: '',
+} as const satisfies Record<RepeatType, string>;
+
+// ───────────────────────────────────────────────────────────────────────────────
 // 유틸리티
-/**
- * 날짜의 시간/분/초를 초기화 (자정으로 설정)
- */
+// ───────────────────────────────────────────────────────────────────────────────
+
+/** 날짜의 시간/분/초를 00:00:00.000으로 초기화 */
 const normalizeDateToMidnight = (date: Date): Date => {
   const normalized = new Date(date);
   normalized.setHours(0, 0, 0, 0);
   return normalized;
 };
 
-/**
- * 시간:분 형식의 문자열을 분 단위로 변환
- */
+/** "HH:mm" → 분 단위로 변환 */
 const timeStringToMinutes = (timeStr: string): number => {
   const [hours, minutes] = timeStr.split(':').map(Number);
   return hours * MINUTES_PER_HOUR + minutes;
@@ -33,29 +43,24 @@ const timeStringToMinutes = (timeStr: string): number => {
 
 /**
  * 반복 타입이 유효한지 검증
- * @param type - 검증할 반복 타입
  * @returns 유효하면 true, 아니면 false
- * @example
- * isValidRepeatType('daily') // true
- * isValidRepeatType('invalid') // false
  */
 export const isValidRepeatType = (_type: unknown): _type is RepeatType => {
   return typeof _type === 'string' && VALID_REPEAT_TYPES.includes(_type as RepeatType);
 };
 
+/** 윤년 여부 (그레고리력) */
+export const isLeapYear = (_year: number): boolean => {
+  return _year % 400 === 0 || (_year % 4 === 0 && _year % 100 !== 0);
+};
+
+// ───────────────────────────────────────────────────────────────────────────────
+// 반복 일정 생성
+// ───────────────────────────────────────────────────────────────────────────────
+
 /**
  * 일일 반복 일정 날짜 생성
- * @param startDate - 시작 날짜
- * @param endDate - 종료 날짜 (undefined면 시작 날짜로부터 1년까지)
- * @param interval - 반복 간격 (기본값: 1, N일마다 반복)
- * @returns 생성된 반복 날짜 배열
- * @throws 없음 (시작 > 종료이면 빈 배열 반환)
- * @example
- * getDailyRepeatDates(new Date('2025-01-01'), new Date('2025-01-05'))
- * // [2025-01-01, 2025-01-02, 2025-01-03, 2025-01-04, 2025-01-05]
- * @example
- * getDailyRepeatDates(new Date('2025-01-01'), new Date('2025-01-10'), 2)
- * // [2025-01-01, 2025-01-03, 2025-01-05, 2025-01-07, 2025-01-09]
+ * - 기본 종료일: startDate 기준 +1년
  */
 export const getDailyRepeatDates = (
   _startDate: Date,
@@ -63,11 +68,11 @@ export const getDailyRepeatDates = (
   _interval: number = 1
 ): Date[] => {
   const startDate = normalizeDateToMidnight(_startDate);
-  const endDate = normalizeDateToMidnight(_endDate || _startDate);
+  const endDate = normalizeDateToMidnight(
+    _endDate ?? new Date(new Date(startDate).setFullYear(startDate.getFullYear() + 1))
+  );
 
-  if (startDate > endDate) {
-    return [];
-  }
+  if (startDate > endDate) return [];
 
   const dates: Date[] = [];
   const currentDate = new Date(startDate);
@@ -76,22 +81,12 @@ export const getDailyRepeatDates = (
     dates.push(new Date(currentDate));
     currentDate.setDate(currentDate.getDate() + _interval);
   }
-
   return dates;
 };
 
 /**
- * 주간 반복 일정 날짜 생성
- * 시작 날짜의 요일과 같은 요일마다 반복
- * @param startDate - 시작 날짜
- * @param endDate - 종료 날짜 (undefined면 시작 날짜로부터 1년까지)
- * @param interval - 반복 간격 (기본값: 1, N주마다 반복)
- * @returns 생성된 반복 날짜 배열 (모두 같은 요일)
- * @throws 없음 (시작 > 종료이면 빈 배열 반환)
- * @example
- * // 2025-01-06은 월요일, 2주마다 반복
- * getWeeklyRepeatDates(new Date('2025-01-06'), new Date('2025-02-03'), 2)
- * // [2025-01-06, 2025-01-20, 2025-02-03]
+ * 주간 반복 일정 날짜 생성 (시작 요일 기준)
+ * - 기본 종료일: startDate 기준 +1년
  */
 export const getWeeklyRepeatDates = (
   _startDate: Date,
@@ -99,11 +94,11 @@ export const getWeeklyRepeatDates = (
   _interval: number = 1
 ): Date[] => {
   const startDate = normalizeDateToMidnight(_startDate);
-  const endDate = normalizeDateToMidnight(_endDate || _startDate);
+  const endDate = normalizeDateToMidnight(
+    _endDate ?? new Date(new Date(startDate).setFullYear(startDate.getFullYear() + 1))
+  );
 
-  if (startDate > endDate) {
-    return [];
-  }
+  if (startDate > endDate) return [];
 
   const targetDayOfWeek = startDate.getDay();
   const dates: Date[] = [];
@@ -117,45 +112,14 @@ export const getWeeklyRepeatDates = (
       currentDate.setDate(currentDate.getDate() + 1);
     }
   }
-
   return dates;
 };
 
 /**
- * 윤년 여부 판정 (그레고리력 규칙)
- * - 400의 배수: 윤년
- * - 100의 배수: 평년
- * - 4의 배수: 윤년
- * - 그 외: 평년
- * @param year - 검증할 연도
- * @returns 윤년이면 true, 아니면 false
- * @example
- * isLeapYear(2000) // true (400의 배수)
- * isLeapYear(1900) // false (100의 배수이지만 400의 배수 아님)
- * isLeapYear(2024) // true (4의 배수)
- * isLeapYear(2025) // false (4의 배수 아님)
- */
-export const isLeapYear = (_year: number): boolean => {
-  return _year % 400 === 0 || (_year % 4 === 0 && _year % 100 !== 0);
-};
-
-/**
  * 월간 반복 일정 날짜 생성
- * - 31일 반복: 31일이 없는 달(2, 4, 6, 9, 11)은 건너뜀
- * - 30일 반복: 30일이 없는 달(2)은 건너뜀
- * @param startDate - 시작 날짜 (날짜가 반복 기준)
- * @param endDate - 종료 날짜 (undefined면 시작 날짜 연도의 12월까지)
- * @param interval - 반복 간격 (기본값: 1, N개월마다 반복)
- * @returns 생성된 반복 날짜 배열
- * @throws 없음 (시작 > 종료이면 빈 배열 반환)
- * @example
- * // 31일 반복: 2025년 1월 31일부터 12월까지
- * getMonthlyRepeatDates(new Date('2025-01-31'), new Date('2025-12-31'))
- * // [2025-01-31, 2025-03-31, 2025-05-31, 2025-07-31, 2025-08-31, 2025-10-31, 2025-12-31]
- * @example
- * // 30일 반복 with 간격 3: 1월, 4월, 7월, 10월
- * getMonthlyRepeatDates(new Date('2025-01-30'), new Date('2025-12-31'), 3)
- * // [2025-01-30, 2025-04-30, 2025-07-30, 2025-10-30]
+ * - 31일: 31일 없는 달은 건너뜀
+ * - 30일: 30일 없는 달(2월)은 건너뜀
+ * - 기본 종료일: 해당 연도 12월 31일
  */
 export const getMonthlyRepeatDates = (
   _startDate: Date,
@@ -163,61 +127,36 @@ export const getMonthlyRepeatDates = (
   _interval: number = 1
 ): Date[] => {
   const startDate = normalizeDateToMidnight(_startDate);
-  const endDate = normalizeDateToMidnight(_endDate || _startDate);
+  const defaultEnd = new Date(startDate.getFullYear(), 11, 31); // 같은 해 12/31
+  const endDate = normalizeDateToMidnight(_endDate ?? defaultEnd);
 
-  if (startDate > endDate) {
-    return [];
-  }
+  if (startDate > endDate) return [];
 
   const targetDay = startDate.getDate();
   const dates: Date[] = [];
   let currentYear = startDate.getFullYear();
   let currentMonth = startDate.getMonth();
 
-  let current = new Date(currentYear, currentMonth, targetDay);
-  current = normalizeDateToMidnight(current);
+  let current = normalizeDateToMidnight(new Date(currentYear, currentMonth, targetDay));
 
   while (current <= endDate) {
-    // 현재 날짜가 유효한지 확인 (해당 달에 그 날이 존재하는지)
     if (current.getDate() === targetDay && current >= startDate) {
       dates.push(new Date(current));
     }
-
-    // 다음 반복 달로 이동
     currentMonth += _interval;
     if (currentMonth > 11) {
       currentYear += Math.floor(currentMonth / MONTHS_PER_YEAR);
       currentMonth = currentMonth % MONTHS_PER_YEAR;
     }
-
-    current = new Date(currentYear, currentMonth, targetDay);
-    current = normalizeDateToMidnight(current);
+    current = normalizeDateToMidnight(new Date(currentYear, currentMonth, targetDay));
   }
-
   return dates;
 };
 
 /**
  * 연간 반복 일정 날짜 생성
- * - 2월 29일: 윤년에만 생성 (평년에는 건너뜀)
- * - 다른 날짜: 매년 같은 날짜에 생성
- * @param startDate - 시작 날짜 (월일이 반복 기준)
- * @param endDate - 종료 날짜 (undefined면 시작 날짜로부터 100년까지)
- * @param interval - 반복 간격 (기본값: 1, N년마다 반복)
- * @returns 생성된 반복 날짜 배열
- * @throws 없음 (시작 > 종료이면 빈 배열 반환)
- * @example
- * // 일반 날짜: 매년 1월 15일
- * getYearlyRepeatDates(new Date('2024-01-15'), new Date('2026-12-31'))
- * // [2024-01-15, 2025-01-15, 2026-01-15]
- * @example
- * // 윤년 29일: 윤년(2020, 2024, 2028)에만 생성
- * getYearlyRepeatDates(new Date('2020-02-29'), new Date('2030-12-31'))
- * // [2020-02-29, 2024-02-29, 2028-02-29]
- * @example
- * // 간격 2: 2년마다
- * getYearlyRepeatDates(new Date('2024-01-15'), new Date('2030-12-31'), 2)
- * // [2024-01-15, 2026-01-15, 2028-01-15, 2030-01-15]
+ * - 2/29: 윤년에만 생성
+ * - 기본 종료일: startDate 기준 +100년
  */
 export const getYearlyRepeatDates = (
   _startDate: Date,
@@ -225,11 +164,10 @@ export const getYearlyRepeatDates = (
   _interval: number = 1
 ): Date[] => {
   const startDate = normalizeDateToMidnight(_startDate);
-  const endDate = normalizeDateToMidnight(_endDate || _startDate);
+  const defaultEnd = new Date(new Date(startDate).setFullYear(startDate.getFullYear() + 100));
+  const endDate = normalizeDateToMidnight(_endDate ?? defaultEnd);
 
-  if (startDate > endDate) {
-    return [];
-  }
+  if (startDate > endDate) return [];
 
   const targetMonth = startDate.getMonth();
   const targetDay = startDate.getDate();
@@ -237,7 +175,6 @@ export const getYearlyRepeatDates = (
   let currentYear = startDate.getFullYear();
 
   while (true) {
-    // 2월 29일 특수 처리: 윤년이 아니면 건너뛰기
     if (targetMonth === FEBRUARY_MONTH && targetDay === LEAP_DAY_DATE) {
       if (!isLeapYear(currentYear)) {
         currentYear += _interval;
@@ -247,150 +184,86 @@ export const getYearlyRepeatDates = (
     }
 
     const current = normalizeDateToMidnight(new Date(currentYear, targetMonth, targetDay));
-
     if (current > endDate) break;
 
     if (current >= startDate) {
       dates.push(new Date(current));
     }
-
     currentYear += _interval;
   }
-
   return dates;
 };
 
+// ───────────────────────────────────────────────────────────────────────────────
+// 겹침 제거
+// ───────────────────────────────────────────────────────────────────────────────
+
 interface ExistingEvent {
-  date: string;
-  startTime: string;
-  endTime: string;
+  date: string;      // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string;   // HH:mm
 }
 
-/**
- * 반복 일정이 기존 일정과 겹치는지 확인
- */
+/** 반복 일정이 기존 일정과 겹치는지 확인 */
 const isOverlapWithEvent = (repeatDate: Date, event: ExistingEvent): boolean => {
   const repeatDateString = repeatDate.toISOString().split('T')[0];
 
   // 날짜가 다르면 겹치지 않음
-  if (event.date !== repeatDateString) {
-    return false;
-  }
+  if (event.date !== repeatDateString) return false;
 
   const repeatHour = repeatDate.getHours();
   const repeatMinute = repeatDate.getMinutes();
 
-  // 시간이 명시되지 않은 경우 (00:00:00): 전체 날짜를 겹침으로 처리
-  if (repeatHour === 0 && repeatMinute === 0) {
-    return true;
-  }
+  // 시간이 00:00인 경우: 당일 전체와 겹치는 것으로 간주(정책)
+  if (repeatHour === 0 && repeatMinute === 0) return true;
 
-  // 시간이 겹치는지 확인
   const eventStartMinutes = timeStringToMinutes(event.startTime);
   const eventEndMinutes = timeStringToMinutes(event.endTime);
   const repeatMinutes = repeatHour * MINUTES_PER_HOUR + repeatMinute;
 
-  // 반복 일정이 기존 일정의 시간 범위 내에 있는지 확인
-  // endTime은 exclusive (포함하지 않음)
+  // endTime은 exclusive
   return repeatMinutes >= eventStartMinutes && repeatMinutes < eventEndMinutes;
 };
 
 /**
- * 반복 일정 중에서 기존 일정과 겹치는 날짜를 제거
- * 반복일정은 일정 겹침을 고려하지 않으므로, 겹치는 일정은 필터링하여 제거
- * @param repeatDates - 반복으로 생성된 날짜 배열
- * @param existingEvents - 기존 일정 배열
- * @returns 겹치는 일정을 제거한 날짜 배열
- * @throws 없음 (빈 배열 입력하면 빈 배열 반환)
- * @example
- * // 기존 일정과 겹치지 않는 날짜만 유지
- * filterOutOverlappingDates(
- *   [new Date('2024-01-15'), new Date('2024-01-16')],
- *   [{startTime: '09:00', endTime: '10:00'}]
- * )
- * // [2024-01-16] (2024-01-15 09:00-10:00과 겹침)
- * @example
- * // 겹치는 일정이 없으면 모든 날짜 유지
- * filterOutOverlappingDates(
- *   [new Date('2024-01-15'), new Date('2024-01-16')],
- *   [{startTime: '14:00', endTime: '15:00'}]
- * )
- * // [2024-01-15, 2024-01-16] (자정 시간이라 겹침 없음)
+ * 반복 일정 중 기존 일정과 겹치는 날짜 제거
  */
 export const filterOutOverlappingDates = (
   _repeatDates: Date[],
   _existingEvents: ExistingEvent[]
 ): Date[] => {
-  if (_repeatDates.length === 0) {
-    return [];
-  }
-
+  if (_repeatDates.length === 0) return [];
   return _repeatDates.filter(
     (repeatDate) => !_existingEvents.some((event) => isOverlapWithEvent(repeatDate, event))
   );
 };
 
+// ───────────────────────────────────────────────────────────────────────────────
+// 검증 & 아이콘
+// ───────────────────────────────────────────────────────────────────────────────
+
 /**
- * 반복 정보의 유효성을 검증합니다.
- *
- * 검증 규칙:
- * - interval은 1 이상이어야 함
- * - endDate가 있으면 startDate 이후여야 함
- *
- * @param repeatInfo - 검증할 반복 정보
- * @param startDate - 시작 날짜 (ISO 8601 형식: YYYY-MM-DD)
- * @throws {Error} 검증 실패 시 에러 발생
- * @example
- * // 유효한 반복 정보
- * validateRepeatInfo(
- *   { type: 'daily', interval: 1, endDate: '2025-12-31' },
- *   '2025-01-01'
- * ) // 에러 없음
- *
- * @example
- * // 유효하지 않은 간격
- * validateRepeatInfo(
- *   { type: 'daily', interval: 0, endDate: '2025-12-31' },
- *   '2025-01-01'
- * ) // Error: Interval must be at least 1
+ * 반복 정보 검증
+ * - interval: 1 이상의 정수
+ * - endDate가 있으면 startDate 이상
  */
 export const validateRepeatInfo = (repeatInfo: RepeatInfo, startDate: string): void => {
-  // interval 검증: 1 이상이어야 함
-  if (repeatInfo.interval < 1) {
-    throw new Error('Interval must be at least 1');
+  if (!Number.isInteger(repeatInfo.interval) || repeatInfo.interval < 1) {
+    throw new Error('Interval must be a positive integer');
   }
-
-  // endDate 검증: startDate 이후여야 함
-  if (repeatInfo.endDate && repeatInfo.endDate < startDate) {
-    throw new Error('End date must be after or equal to start date');
+  if (repeatInfo.endDate) {
+    const s = new Date(startDate);
+    const e = new Date(repeatInfo.endDate);
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) {
+      throw new Error('Invalid date format');
+    }
+    if (e < s) {
+      throw new Error('End date must be after or equal to start date');
+    }
   }
 };
 
 /**
- * 반복 타입에 따른 아이콘을 반환합니다.
- *
- * 각 반복 타입별 아이콘:
- * - 'daily': 📅 (매일)
- * - 'weekly': 🔄 (매주)
- * - 'monthly': 📆 (매월)
- * - 'yearly': 🗓️ (매년)
- * - 'none': '' (반복 없음)
- *
- * @param repeatType - 반복 타입
- * @returns 해당 반복 타입의 아이콘 문자열
- * @example
- * getRepeatIcon('daily') // '📅'
- * getRepeatIcon('weekly') // '🔄'
- * getRepeatIcon('monthly') // '📆'
- * getRepeatIcon('yearly') // '🗓️'
+ * 반복 타입에 따른 아이콘 반환 (타입 안전)
  */
-export const getRepeatIcon = (repeatType: RepeatType | string): string => {
-  const icons: Record<string, string> = {
-    daily: '📅',
-    weekly: '🔄',
-    monthly: '📆',
-    yearly: '🗓️',
-    none: '',
-  };
-  return icons[repeatType] || '';
-};
+export const getRepeatIcon = (repeatType: RepeatType): string => ICONS[repeatType];
