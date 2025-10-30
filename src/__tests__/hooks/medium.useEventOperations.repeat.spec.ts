@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { RepeatInfo } from '../../types';
 
+import type { RepeatInfo } from '../../types';
 import { getRepeatIcon, validateRepeatInfo } from '../../utils/repeatUtils';
 
 /**

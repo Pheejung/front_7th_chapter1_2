@@ -15,8 +15,7 @@ import {
  * const strings = toDateStrings(dates);
  * // ["2025-01-01"]
  */
-const toDateStrings = (dates: Date[]): string[] =>
-  dates.map((d) => d.toISOString().split('T')[0]);
+const toDateStrings = (dates: Date[]): string[] => dates.map((d) => d.toISOString().split('T')[0]);
 
 describe('repeatUtils - 반복 유형 선택', () => {
   describe('isValidRepeatType - 반복 유형 검증', () => {
