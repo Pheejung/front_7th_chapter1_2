@@ -1,33 +1,32 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { RepeatInfo } from '../../types';
-import { validateRepeatInfo, getRepeatIcon } from '../../utils/repeatUtils';
+
+import { getRepeatIcon, validateRepeatInfo } from '../../utils/repeatUtils';
 
 /**
- * Task R-002 RED: 반복 일정 기능 테스트
- * 
+ * Task R-002 GREEN: 반복 일정 기능 테스트
+ *
  * 반복 정보 검증 및 반복 아이콘 표시 함수 테스트
- * RED 단계: validateRepeatInfo와 getRepeatIcon 함수가 아직 없어서 모든 테스트가 실패해야 함
- * 
+ *
  * 테스트 구조:
- * - validateRepeatInfo 함수: 반복 정보 검증 (아직 구현되지 않음)
- * - getRepeatIcon 함수: 반복 타입별 아이콘 (아직 구현되지 않음)
- * 
+ * - validateRepeatInfo 함수: 반복 정보 검증
+ * - getRepeatIcon 함수: 반복 타입별 아이콘
+ *
  * 참고: generateRepeatDates는 R-001의 반복 날짜 생성 함수들을 조합하므로 테스트 불필요
  */
 
-describe('Task R-002 RED: 반복 일정 기능 확장', () => {
-  // 테스트 픽스처: 반복 정보
-  const dailyRepeat: RepeatInfo = {
-    type: 'daily',
-    interval: 1,
-    endDate: '2025-12-31',
-  };
+// 테스트 유틸: 반복 정보 생성 헬퍼
+const createRepeatInfo = (overrides?: Partial<RepeatInfo>): RepeatInfo => ({
+  type: 'daily',
+  interval: 1,
+  endDate: '2025-12-31',
+  ...overrides,
+});
 
-  const weeklyRepeat: RepeatInfo = {
-    type: 'weekly',
-    interval: 1,
-    endDate: '2025-12-31',
-  };
+describe('Task R-002 GREEN: 반복 일정 기능 확장', () => {
+  // 테스트 픽스처: 반복 정보
+  const dailyRepeat = createRepeatInfo({ type: 'daily' });
+  const weeklyRepeat = createRepeatInfo({ type: 'weekly' });
 
   describe('정상 케이스: validateRepeatInfo 함수 테스트', () => {
     it('validateRepeatInfo 함수가 존재해야 한다', () => {
@@ -113,44 +112,21 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
       expect(typeof getRepeatIcon).toBe('function');
     });
 
-    it('getRepeatIcon는 daily 반복에 대한 아이콘을 반환해야 한다', () => {
-      // Arrange
-      const repeatType = 'daily';
+    // 반복 타입별 아이콘 테스트 (매개변수화)
+    const iconTestCases = [
+      { type: 'daily', description: 'daily 반복' },
+      { type: 'weekly', description: 'weekly 반복' },
+      { type: 'monthly', description: 'monthly 반복' },
+      { type: 'yearly', description: 'yearly 반복' },
+    ];
 
-      // Act & Assert
-      const icon = getRepeatIcon(repeatType);
-      expect(icon).toBeDefined();
-      expect(typeof icon).toBe('string');
-    });
-
-    it('getRepeatIcon는 weekly 반복에 대한 아이콘을 반환해야 한다', () => {
-      // Arrange
-      const repeatType = 'weekly';
-
-      // Act & Assert
-      const icon = getRepeatIcon(repeatType);
-      expect(icon).toBeDefined();
-      expect(typeof icon).toBe('string');
-    });
-
-    it('getRepeatIcon는 monthly 반복에 대한 아이콘을 반환해야 한다', () => {
-      // Arrange
-      const repeatType = 'monthly';
-
-      // Act & Assert
-      const icon = getRepeatIcon(repeatType);
-      expect(icon).toBeDefined();
-      expect(typeof icon).toBe('string');
-    });
-
-    it('getRepeatIcon는 yearly 반복에 대한 아이콘을 반환해야 한다', () => {
-      // Arrange
-      const repeatType = 'yearly';
-
-      // Act & Assert
-      const icon = getRepeatIcon(repeatType);
-      expect(icon).toBeDefined();
-      expect(typeof icon).toBe('string');
+    iconTestCases.forEach(({ description, type }) => {
+      it(`getRepeatIcon는 ${description}에 대한 아이콘을 반환해야 한다`, () => {
+        // Act & Assert
+        const icon = getRepeatIcon(type);
+        expect(icon).toBeDefined();
+        expect(typeof icon).toBe('string');
+      });
     });
 
     it('getRepeatIcon는 다양한 반복 타입마다 다른 아이콘을 반환해야 한다', () => {
@@ -158,11 +134,11 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
       const repeatTypes = ['daily', 'weekly', 'monthly', 'yearly'];
 
       // Act & Assert
-      const icons = repeatTypes.map(type => getRepeatIcon(type));
-      
+      const icons = repeatTypes.map((type) => getRepeatIcon(type));
+
       // 모든 아이콘이 정의되어야 함
-      expect(icons.every(icon => icon !== undefined)).toBe(true);
-      
+      expect(icons.every((icon) => icon !== undefined)).toBe(true);
+
       // 아이콘들이 모두 다른지 확인
       const uniqueIcons = new Set(icons);
       expect(uniqueIcons.size).toBe(repeatTypes.length);

@@ -332,11 +332,11 @@ export const filterOutOverlappingDates = (
 
 /**
  * 반복 정보의 유효성을 검증합니다.
- * 
+ *
  * 검증 규칙:
  * - interval은 1 이상이어야 함
  * - endDate가 있으면 startDate 이후여야 함
- * 
+ *
  * @param repeatInfo - 검증할 반복 정보
  * @param startDate - 시작 날짜 (ISO 8601 형식: YYYY-MM-DD)
  * @throws {Error} 검증 실패 시 에러 발생
@@ -346,7 +346,7 @@ export const filterOutOverlappingDates = (
  *   { type: 'daily', interval: 1, endDate: '2025-12-31' },
  *   '2025-01-01'
  * ) // 에러 없음
- * 
+ *
  * @example
  * // 유효하지 않은 간격
  * validateRepeatInfo(
@@ -368,14 +368,14 @@ export const validateRepeatInfo = (repeatInfo: RepeatInfo, startDate: string): v
 
 /**
  * 반복 타입에 따른 아이콘을 반환합니다.
- * 
+ *
  * 각 반복 타입별 아이콘:
  * - 'daily': 📅 (매일)
  * - 'weekly': 🔄 (매주)
  * - 'monthly': 📆 (매월)
  * - 'yearly': 🗓️ (매년)
  * - 'none': '' (반복 없음)
- * 
+ *
  * @param repeatType - 반복 타입
  * @returns 해당 반복 타입의 아이콘 문자열
  * @example
@@ -386,11 +386,11 @@ export const validateRepeatInfo = (repeatInfo: RepeatInfo, startDate: string): v
  */
 export const getRepeatIcon = (repeatType: RepeatType | string): string => {
   const icons: Record<string, string> = {
-    'daily': '📅',
-    'weekly': '🔄',
-    'monthly': '📆',
-    'yearly': '🗓️',
-    'none': '',
+    daily: '📅',
+    weekly: '🔄',
+    monthly: '📆',
+    yearly: '🗓️',
+    none: '',
   };
   return icons[repeatType] || '';
 };
