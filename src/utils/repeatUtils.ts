@@ -22,7 +22,11 @@ export const isValidRepeatType = (_type: unknown): _type is RepeatType => {
  * @param interval - 반복 간격 (기본값: 1, N일마다 반복)
  * @returns 생성된 반복 날짜 배열
  */
-export const getDailyRepeatDates = (_startDate: Date, _endDate?: Date, _interval: number = 1): Date[] => {
+export const getDailyRepeatDates = (
+  _startDate: Date,
+  _endDate?: Date,
+  _interval: number = 1
+): Date[] => {
   const startDate = new Date(_startDate);
   startDate.setHours(0, 0, 0, 0);
 
@@ -53,7 +57,11 @@ export const getDailyRepeatDates = (_startDate: Date, _endDate?: Date, _interval
  * @param interval - 반복 간격 (기본값: 1, N주마다 반복)
  * @returns 생성된 반복 날짜 배열
  */
-export const getWeeklyRepeatDates = (_startDate: Date, _endDate?: Date, _interval: number = 1): Date[] => {
+export const getWeeklyRepeatDates = (
+  _startDate: Date,
+  _endDate?: Date,
+  _interval: number = 1
+): Date[] => {
   const startDate = new Date(_startDate);
   startDate.setHours(0, 0, 0, 0);
 
@@ -106,7 +114,11 @@ export const isLeapYear = (_year: number): boolean => {
  * @param interval - 반복 간격 (기본값: 1, N개월마다 반복)
  * @returns 생성된 반복 날짜 배열
  */
-export const getMonthlyRepeatDates = (_startDate: Date, _endDate?: Date, _interval: number = 1): Date[] => {
+export const getMonthlyRepeatDates = (
+  _startDate: Date,
+  _endDate?: Date,
+  _interval: number = 1
+): Date[] => {
   const startDate = new Date(_startDate);
   startDate.setHours(0, 0, 0, 0);
 
@@ -157,7 +169,11 @@ export const getMonthlyRepeatDates = (_startDate: Date, _endDate?: Date, _interv
  * @param interval - 반복 간격 (기본값: 1, N년마다 반복)
  * @returns 생성된 반복 날짜 배열
  */
-export const getYearlyRepeatDates = (_startDate: Date, _endDate?: Date, _interval: number = 1): Date[] => {
+export const getYearlyRepeatDates = (
+  _startDate: Date,
+  _endDate?: Date,
+  _interval: number = 1
+): Date[] => {
   const startDate = new Date(_startDate);
   startDate.setHours(0, 0, 0, 0);
 
@@ -202,6 +218,12 @@ export const getYearlyRepeatDates = (_startDate: Date, _endDate?: Date, _interva
   return dates;
 };
 
+interface ExistingEvent {
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
 /**
  * 반복 일정 중에서 기존 일정과 겹치는 날짜를 제거
  * 반복일정은 일정 겹침을 고려하지 않으므로, 겹치는 일정은 필터링하여 제거
@@ -211,7 +233,7 @@ export const getYearlyRepeatDates = (_startDate: Date, _endDate?: Date, _interva
  */
 export const filterOutOverlappingDates = (
   _repeatDates: Date[],
-  _existingEvents: any[]
+  _existingEvents: ExistingEvent[]
 ): Date[] => {
   if (_repeatDates.length === 0) {
     return [];

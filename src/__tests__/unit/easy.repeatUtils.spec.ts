@@ -21,7 +21,7 @@ describe('repeatUtils - 반복 유형 선택', () => {
     it('유효하지 않은 값을 false로 반환한다', () => {
       expect(isValidRepeatType('invalid')).toBe(false);
       expect(isValidRepeatType('')).toBe(false);
-      expect(isValidRepeatType(null as any)).toBe(false);
+      expect(isValidRepeatType(null as unknown as string)).toBe(false);
     });
   });
 
@@ -29,7 +29,7 @@ describe('repeatUtils - 반복 유형 선택', () => {
     it('시작 날짜부터 종료 날짜까지 매일 일정을 생성한다', () => {
       const dates = getDailyRepeatDates(new Date('2025-01-01'), new Date('2025-01-05'));
       const dateStrings = dates.map((d) => d.toISOString().split('T')[0]);
-      
+
       expect(dateStrings).toEqual([
         '2025-01-01',
         '2025-01-02',
@@ -43,13 +43,19 @@ describe('repeatUtils - 반복 유형 선택', () => {
       // 간격 2: 2일마다 반복 (1일, 3일, 5일, 7일, 9일...)
       const dates = getDailyRepeatDates(new Date('2025-01-01'), new Date('2025-01-10'), 2);
       const dateStrings = dates.map((d) => d.toISOString().split('T')[0]);
-      expect(dateStrings).toEqual(['2025-01-01', '2025-01-03', '2025-01-05', '2025-01-07', '2025-01-09']);
+      expect(dateStrings).toEqual([
+        '2025-01-01',
+        '2025-01-03',
+        '2025-01-05',
+        '2025-01-07',
+        '2025-01-09',
+      ]);
     });
 
     it('월 경계를 넘어서도 매일 생성한다', () => {
       const dates = getDailyRepeatDates(new Date('2025-01-30'), new Date('2025-02-02'));
       const dateStrings = dates.map((d) => d.toISOString().split('T')[0]);
-      
+
       expect(dateStrings).toContain('2025-01-31');
       expect(dateStrings).toContain('2025-02-01');
       expect(dateStrings).toContain('2025-02-02');
@@ -69,7 +75,7 @@ describe('repeatUtils - 반복 유형 선택', () => {
 
       // 모든 날짜가 같은 요일인지 확인
       expect(dates.every((d) => d.getDay() === startDate.getDay())).toBe(true);
-      
+
       // 주 단위 간격 확인 (월요일: 1월 6일, 13일, 20일, 27일)
       expect(dateStrings).toContain('2025-01-06');
       expect(dateStrings).toContain('2025-01-13');
@@ -285,12 +291,12 @@ describe('repeatUtils - 반복 유형 선택', () => {
 
   describe('filterOutOverlappingDates - 반복일정은 일정 겹침을 고려하지 않는다', () => {
     it('겹치는 일정이 없으면 모든 반복 날짜를 반환한다', () => {
-      const repeatDates = [
-        new Date('2025-01-01'),
-        new Date('2025-01-02'),
-        new Date('2025-01-03'),
-      ];
-      const existingEvents: any[] = [];
+      const repeatDates = [new Date('2025-01-01'), new Date('2025-01-02'), new Date('2025-01-03')];
+      const existingEvents: Array<{
+        date: string;
+        startTime: string;
+        endTime: string;
+      }> = [];
 
       const filtered = filterOutOverlappingDates(repeatDates, existingEvents);
 
@@ -298,11 +304,7 @@ describe('repeatUtils - 반복 유형 선택', () => {
     });
 
     it('겹치는 일정이 있으면 해당 날짜를 제거한다', () => {
-      const repeatDates = [
-        new Date('2025-01-01'),
-        new Date('2025-01-02'),
-        new Date('2025-01-03'),
-      ];
+      const repeatDates = [new Date('2025-01-01'), new Date('2025-01-02'), new Date('2025-01-03')];
       const existingEvents = [
         { date: '2025-01-02', startTime: '10:00', endTime: '11:00' },
         { date: '2025-01-03', startTime: '14:00', endTime: '15:00' },
@@ -320,9 +322,7 @@ describe('repeatUtils - 반복 유형 선택', () => {
         new Date('2025-01-01T10:30:00'),
         new Date('2025-01-01T14:00:00'),
       ];
-      const existingEvents = [
-        { date: '2025-01-01', startTime: '10:00', endTime: '11:00' },
-      ];
+      const existingEvents = [{ date: '2025-01-01', startTime: '10:00', endTime: '11:00' }];
 
       const filtered = filterOutOverlappingDates(repeatDates, existingEvents);
 
@@ -333,9 +333,7 @@ describe('repeatUtils - 반복 유형 선택', () => {
 
     it('시간이 겹치지 않으면 유지한다', () => {
       const repeatDates = [new Date('2025-01-01T11:00:00')];
-      const existingEvents = [
-        { date: '2025-01-01', startTime: '10:00', endTime: '11:00' },
-      ];
+      const existingEvents = [{ date: '2025-01-01', startTime: '10:00', endTime: '11:00' }];
 
       const filtered = filterOutOverlappingDates(repeatDates, existingEvents);
 
