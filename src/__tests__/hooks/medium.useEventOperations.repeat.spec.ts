@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { RepeatInfo } from '../../types';
+import { validateRepeatInfo, getRepeatIcon } from '../../utils/repeatUtils';
 
 /**
  * Task R-002 RED: 반복 일정 기능 테스트
@@ -13,10 +14,6 @@ import type { RepeatInfo } from '../../types';
  * 
  * 참고: generateRepeatDates는 R-001의 반복 날짜 생성 함수들을 조합하므로 테스트 불필요
  */
-
-// 함수 선언 (구현되지 않음 - RED 상태)
-let validateRepeatInfo: ((repeatInfo: RepeatInfo, startDate: string) => void) | undefined;
-let getRepeatIcon: ((repeatType: string) => string) | undefined;
 
 describe('Task R-002 RED: 반복 일정 기능 확장', () => {
   // 테스트 픽스처: 반복 정보
@@ -34,9 +31,9 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
 
   describe('정상 케이스: validateRepeatInfo 함수 테스트', () => {
     it('validateRepeatInfo 함수가 존재해야 한다', () => {
-      // Arrange & Act & Assert - RED 상태: 함수가 없으므로 테스트 실패
-      validateRepeatInfo; // 선언된 변수 사용
-      throw new Error('validateRepeatInfo is not implemented');
+      // Arrange & Act & Assert
+      expect(validateRepeatInfo).toBeDefined();
+      expect(typeof validateRepeatInfo).toBe('function');
     });
 
     it('validateRepeatInfo는 유효한 반복 정보(daily)를 검증할 수 있어야 한다', () => {
@@ -46,7 +43,6 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
 
       // Act & Assert
       expect(() => {
-        if (!validateRepeatInfo) throw new Error('validateRepeatInfo not implemented');
         validateRepeatInfo(repeatInfo, startDate);
       }).not.toThrow();
     });
@@ -58,7 +54,6 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
 
       // Act & Assert
       expect(() => {
-        if (!validateRepeatInfo) throw new Error('validateRepeatInfo not implemented');
         validateRepeatInfo(repeatInfo, startDate);
       }).not.toThrow();
     });
@@ -75,9 +70,6 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
       const startDate = '2025-01-15';
 
       // Act & Assert
-      if (!validateRepeatInfo) {
-        throw new Error('validateRepeatInfo must be implemented');
-      }
       expect(() => {
         validateRepeatInfo(invalidRepeat, startDate);
       }).toThrow();
@@ -93,9 +85,6 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
       const startDate = '2025-01-15';
 
       // Act & Assert
-      if (!validateRepeatInfo) {
-        throw new Error('validateRepeatInfo must be implemented');
-      }
       expect(() => {
         validateRepeatInfo(invalidRepeat, startDate);
       }).toThrow();
@@ -111,9 +100,6 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
       const startDate = '2025-01-15';
 
       // Act & Assert
-      if (!validateRepeatInfo) {
-        throw new Error('validateRepeatInfo must be implemented');
-      }
       expect(() => {
         validateRepeatInfo(invalidRepeat, startDate);
       }).toThrow();
@@ -122,9 +108,9 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
 
   describe('정상 케이스: getRepeatIcon 함수 테스트', () => {
     it('getRepeatIcon 함수가 존재해야 한다', () => {
-      // Arrange & Act & Assert - RED 상태: 함수가 없으므로 테스트 실패
-      getRepeatIcon; // 선언된 변수 사용
-      throw new Error('getRepeatIcon is not implemented');
+      // Arrange & Act & Assert
+      expect(getRepeatIcon).toBeDefined();
+      expect(typeof getRepeatIcon).toBe('function');
     });
 
     it('getRepeatIcon는 daily 반복에 대한 아이콘을 반환해야 한다', () => {
@@ -132,9 +118,6 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
       const repeatType = 'daily';
 
       // Act & Assert
-      if (!getRepeatIcon) {
-        throw new Error('getRepeatIcon must be implemented');
-      }
       const icon = getRepeatIcon(repeatType);
       expect(icon).toBeDefined();
       expect(typeof icon).toBe('string');
@@ -145,9 +128,6 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
       const repeatType = 'weekly';
 
       // Act & Assert
-      if (!getRepeatIcon) {
-        throw new Error('getRepeatIcon must be implemented');
-      }
       const icon = getRepeatIcon(repeatType);
       expect(icon).toBeDefined();
       expect(typeof icon).toBe('string');
@@ -158,9 +138,6 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
       const repeatType = 'monthly';
 
       // Act & Assert
-      if (!getRepeatIcon) {
-        throw new Error('getRepeatIcon must be implemented');
-      }
       const icon = getRepeatIcon(repeatType);
       expect(icon).toBeDefined();
       expect(typeof icon).toBe('string');
@@ -171,9 +148,6 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
       const repeatType = 'yearly';
 
       // Act & Assert
-      if (!getRepeatIcon) {
-        throw new Error('getRepeatIcon must be implemented');
-      }
       const icon = getRepeatIcon(repeatType);
       expect(icon).toBeDefined();
       expect(typeof icon).toBe('string');
@@ -184,9 +158,6 @@ describe('Task R-002 RED: 반복 일정 기능 확장', () => {
       const repeatTypes = ['daily', 'weekly', 'monthly', 'yearly'];
 
       // Act & Assert
-      if (!getRepeatIcon) {
-        throw new Error('getRepeatIcon must be implemented');
-      }
       const icons = repeatTypes.map(type => getRepeatIcon(type));
       
       // 모든 아이콘이 정의되어야 함
