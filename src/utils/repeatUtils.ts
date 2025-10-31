@@ -9,6 +9,8 @@ const VALID_REPEAT_TYPES: readonly RepeatType[] = [
 ] as const;
 
 const MAX_RECURRING_DAYS = 365;
+const MAX_ITERATIONS = 1000; // 무한 루프 방지
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /**
  * 반복 타입이 유효한지 검증
@@ -66,9 +68,128 @@ const formatDate = (date: Date): string => {
 };
 
 /**
+ * 현재 날짜가 반복 조건을 만족하는지 확인
+ * @param currentDate - 확인할 현재 날짜
+ * @param startDay - 시작 날짜의 일(day)
+ * @param startMonth - 시작 날짜의 월(month, 0-based)
+ * @param repeatType - 반복 타입
+ * @returns 반복 조건을 만족하면 true
+ */
+const shouldAddEvent = (
+  currentDate: Date,
+  startDay: number,
+  startMonth: number,
+  repeatType: RepeatType
+): boolean => {
+  switch (repeatType) {
+    case 'daily':
+    case 'weekly':
+      return true;
+
+    case 'monthly': {
+      const currentDay = currentDate.getDate();
+      const currentYear = currentDate.getFullYear();
+      const currentMonth = currentDate.getMonth() + 1;
+      const lastDayOfCurrentMonth = getLastDayOfMonth(currentYear, currentMonth);
+
+      // 시작일이 해당 월의 마지막 날보다 크면 건너뛰기 (예: 31일이 없는 달)
+      if (startDay > lastDayOfCurrentMonth) {
+        return false;
+      }
+      return currentDay === startDay;
+    }
+
+    case 'yearly': {
+      const currentMonth = currentDate.getMonth();
+      const currentDay = currentDate.getDate();
+      const currentYear = currentDate.getFullYear();
+
+      // 2월 29일은 윤년에만 생성
+      if (startMonth === 1 && startDay === 29) {
+        return isLeapYear(currentYear) && currentMonth === 1 && currentDay === 29;
+      }
+      return currentMonth === startMonth && currentDay === startDay;
+    }
+
+    default:
+      return false;
+  }
+};
+
+/**
+ * 다음 반복 날짜 계산
+ * @param currentDate - 현재 날짜
+ * @param startDay - 시작 날짜의 일(day)
+ * @param startMonth - 시작 날짜의 월(month, 0-based)
+ * @param repeatType - 반복 타입
+ * @param interval - 반복 간격
+ * @returns 다음 반복 날짜
+ */
+const getNextOccurrence = (
+  currentDate: Date,
+  startDay: number,
+  startMonth: number,
+  repeatType: RepeatType,
+  interval: number
+): Date => {
+  switch (repeatType) {
+    case 'daily': {
+      const next = new Date(currentDate);
+      next.setDate(next.getDate() + interval);
+      return next;
+    }
+
+    case 'weekly': {
+      const next = new Date(currentDate);
+      next.setDate(next.getDate() + 7 * interval);
+      return next;
+    }
+
+    case 'monthly': {
+      const targetMonth = currentDate.getMonth() + interval;
+      const targetYear = currentDate.getFullYear() + Math.floor(targetMonth / 12);
+      const newMonth = targetMonth % 12;
+
+      // 해당 월에 startDay가 존재하는지 확인하여 날짜 조정
+      const lastDayOfTargetMonth = getLastDayOfMonth(targetYear, newMonth + 1);
+      const actualDay = Math.min(startDay, lastDayOfTargetMonth);
+
+      return new Date(targetYear, newMonth, actualDay);
+    }
+
+    case 'yearly': {
+      const nextYear = currentDate.getFullYear() + interval;
+      return new Date(nextYear, startMonth, startDay);
+    }
+
+    default:
+      return new Date(currentDate);
+  }
+};
+
+/**
  * 반복 일정 생성
+ * - 매일/매주/매월/매년 반복 일정을 생성합니다
+ * - 31일이 없는 달은 자동으로 건너뜁니다
+ * - 2월 29일 연간 반복은 윤년에만 생성됩니다
+ *
  * @param baseEvent - 기준 이벤트
  * @returns 생성된 반복 일정 배열
+ *
+ * @example
+ * // 매일 반복 (5일간)
+ * generateRecurringEvents({
+ *   ...event,
+ *   repeat: { type: 'daily', interval: 1, endDate: '2025-11-05' }
+ * })
+ *
+ * @example
+ * // 매월 31일 반복 (31일이 없는 달은 건너뜀)
+ * generateRecurringEvents({
+ *   ...event,
+ *   date: '2025-01-31',
+ *   repeat: { type: 'monthly', interval: 1, endDate: '2025-05-31' }
+ * })
  */
 export const generateRecurringEvents = (baseEvent: Event): Event[] => {
   const { repeat, date: startDateStr } = baseEvent;
@@ -86,97 +207,32 @@ export const generateRecurringEvents = (baseEvent: Event): Event[] => {
   // 종료 날짜 설정 (없으면 최대 365일)
   const endDate = repeat.endDate
     ? new Date(repeat.endDate)
-    : new Date(startDate.getTime() + MAX_RECURRING_DAYS * 24 * 60 * 60 * 1000);
+    : new Date(startDate.getTime() + MAX_RECURRING_DAYS * MILLISECONDS_PER_DAY);
 
   let currentDate = new Date(startDate);
   let eventIndex = 0;
-
-  // 무한 루프 방지를 위한 최대 반복 횟수
-  const maxIterations = 1000;
   let iterations = 0;
 
-  while (currentDate <= endDate && iterations < maxIterations) {
+  while (currentDate <= endDate && iterations < MAX_ITERATIONS) {
     iterations++;
-    let shouldAdd = false;
 
-    switch (repeat.type) {
-      case 'daily':
-        shouldAdd = true;
-        break;
-
-      case 'weekly':
-        shouldAdd = true;
-        break;
-
-      case 'monthly': {
-        const currentDay = currentDate.getDate();
-        const currentYear = currentDate.getFullYear();
-        const currentMonth = currentDate.getMonth() + 1;
-        const lastDay = getLastDayOfMonth(currentYear, currentMonth);
-
-        // 원래 시작일이 해당 월의 마지막 날보다 큰 경우, 해당 월에 그 날짜가 있을 때만 추가
-        if (startDay > lastDay) {
-          shouldAdd = false;
-        } else {
-          shouldAdd = currentDay === startDay;
-        }
-        break;
-      }
-
-      case 'yearly': {
-        const currentMonth = currentDate.getMonth();
-        const currentDay = currentDate.getDate();
-        const currentYear = currentDate.getFullYear();
-
-        // 2월 29일 윤년 처리
-        if (startMonth === 1 && startDay === 29) {
-          shouldAdd = isLeapYear(currentYear) && currentMonth === 1 && currentDay === 29;
-        } else {
-          shouldAdd = currentMonth === startMonth && currentDay === startDay;
-        }
-        break;
-      }
-    }
-
-    if (shouldAdd) {
-      const newEvent: Event = {
+    if (shouldAddEvent(currentDate, startDay, startMonth, repeat.type)) {
+      events.push({
         ...baseEvent,
         id: `${baseEvent.id}-repeat-${eventIndex}`,
         date: formatDate(currentDate),
-      };
-      events.push(newEvent);
+      });
       eventIndex++;
     }
 
-    // 다음 날짜로 이동
-    switch (repeat.type) {
-      case 'daily':
-        currentDate.setDate(currentDate.getDate() + repeat.interval);
-        break;
-
-      case 'weekly':
-        currentDate.setDate(currentDate.getDate() + 7 * repeat.interval);
-        break;
-
-      case 'monthly': {
-        // 월 이동 시 날짜가 자동 조정되는 것을 방지
-        const targetMonth = currentDate.getMonth() + repeat.interval;
-        const targetYear = currentDate.getFullYear() + Math.floor(targetMonth / 12);
-        const newMonth = targetMonth % 12;
-
-        // 해당 월에 startDay가 존재하는지 확인
-        const lastDayOfTargetMonth = getLastDayOfMonth(targetYear, newMonth + 1);
-        const actualDay = Math.min(startDay, lastDayOfTargetMonth);
-
-        currentDate = new Date(targetYear, newMonth, actualDay);
-        break;
-      }
-
-      case 'yearly':
-        // 연도만 변경하고 월/일은 유지
-        currentDate = new Date(currentDate.getFullYear() + repeat.interval, startMonth, startDay);
-        break;
-    }
+    // 다음 반복 날짜로 이동
+    currentDate = getNextOccurrence(
+      currentDate,
+      startDay,
+      startMonth,
+      repeat.type,
+      repeat.interval
+    );
   }
 
   return events;
