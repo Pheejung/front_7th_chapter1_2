@@ -133,38 +133,16 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
    */
   const updateAllRecurringEvents = async (parentId: string, updates: Partial<EventForm>) => {
     try {
-      // 1. parentId가 같은 모든 반복 이벤트 조회
       const eventsToUpdate = events.filter((event) => event.parentId === parentId);
 
       if (eventsToUpdate.length === 0) {
         throw new Error('No recurring events found with this parentId');
       }
 
-      // 2. 각 이벤트를 병렬로 업데이트
-      const updatePromises = eventsToUpdate.map(async (event) => {
-        // 변경되지 않아야 할 필드들을 명시적으로 유지
-        const updatedEvent = {
-          ...event,
-          ...updates,
-          date: event.date, // 각 이벤트의 날짜는 고유하게 유지
-          parentId: event.parentId, // 반복 일정 그룹 관계 유지
-          repeat: event.repeat, // 반복 설정 유지
-        };
+      const updatePromises = eventsToUpdate.map((event) =>
+        updateSingleRecurringEvent(event, updates)
+      );
 
-        const response = await fetch(`/api/events/${event.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedEvent),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to update event ${event.id}`);
-        }
-
-        return response.json();
-      });
-
-      // 3. 모든 업데이트가 완료될 때까지 대기
       await Promise.all(updatePromises);
       await fetchEvents();
       enqueueSnackbar('모든 반복 일정이 수정되었습니다.', { variant: 'success' });
@@ -172,6 +150,36 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
       console.error('Error updating recurring events:', error);
       enqueueSnackbar('반복 일정 수정 실패', { variant: 'error' });
     }
+  };
+
+  /**
+   * 개별 반복 일정 이벤트를 업데이트
+   *
+   * @param event - 업데이트할 원본 이벤트
+   * @param updates - 수정할 필드들
+   * @returns 업데이트된 이벤트
+   * @private
+   */
+  const updateSingleRecurringEvent = async (event: Event, updates: Partial<EventForm>) => {
+    const updatedEvent = {
+      ...event,
+      ...updates,
+      date: event.date,
+      parentId: event.parentId,
+      repeat: event.repeat,
+    };
+
+    const response = await fetch(`/api/events/${event.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedEvent),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update event ${event.id}`);
+    }
+
+    return response.json();
   };
 
   async function init() {
