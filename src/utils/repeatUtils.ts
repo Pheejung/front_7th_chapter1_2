@@ -172,16 +172,19 @@ const getNextOccurrence = (
  * - 매일/매주/매월/매년 반복 일정을 생성합니다
  * - 31일이 없는 달은 자동으로 건너뜁니다
  * - 2월 29일 연간 반복은 윤년에만 생성됩니다
+ * - 생성된 모든 이벤트는 원본 이벤트의 ID를 parentId로 가집니다
  *
  * @param baseEvent - 기준 이벤트
- * @returns 생성된 반복 일정 배열
+ * @returns 생성된 반복 일정 배열 (각 이벤트는 고유 ID와 공통 parentId를 가짐)
  *
  * @example
  * // 매일 반복 (5일간)
- * generateRecurringEvents({
+ * const events = generateRecurringEvents({
  *   ...event,
+ *   id: 'event-1',
  *   repeat: { type: 'daily', interval: 1, endDate: '2025-11-05' }
- * })
+ * });
+ * // 결과: 5개 이벤트, 각각 고유 ID를 가지며 모두 parentId='event-1'
  *
  * @example
  * // 매월 31일 반복 (31일이 없는 달은 건너뜀)
@@ -190,6 +193,15 @@ const getNextOccurrence = (
  *   date: '2025-01-31',
  *   repeat: { type: 'monthly', interval: 1, endDate: '2025-05-31' }
  * })
+ * // 결과: 1월, 3월, 5월 31일만 생성 (2월, 4월 제외)
+ *
+ * @example
+ * // 단일 일정 (반복 없음)
+ * generateRecurringEvents({
+ *   ...event,
+ *   repeat: { type: 'none', interval: 0 }
+ * })
+ * // 결과: 1개 이벤트, parentId 없음
  */
 export const generateRecurringEvents = (baseEvent: Event): Event[] => {
   const { repeat, date: startDateStr } = baseEvent;
