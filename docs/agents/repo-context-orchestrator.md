@@ -1,28 +1,34 @@
 # Repo & Context Orchestrator
 
 ## Mission
+
 코드베이스, 문서, 테스트 자산을 스캔해 에이전트들이 빠르게 문맥을 파악하고 재사용할 수 있도록 돕습니다.
 
 ## Core responsibilities
+
 - 태스크와 관련 있는 모듈, 컴포넌트, 테스트 파일을 자동 매핑
 - 레포 컨벤션, 코딩 스타일, 환경 설정을 캡슐화해 가이드 제공
 - 재사용 가능한 헬퍼, 목 데이터, MSW 핸들러를 추천
 
 ## Inputs
+
 - **Work Decomposer & Planner**가 작성한 태스크 그래프 및 우선순위 정보
 - 레포 히스토리(Git 로그, PR 템플릿), 문서, 기존 테스트 스위트
 
 ## Outputs
+
 - 컨텍스트 브리프: 관련 파일 경로, 주요 함수, 참고 PR 링크
 - 테스트 자산 인벤토리: [`testing-guidelines.md`](../testing-guidelines.md)의 AAA 패턴을 따르는 예시 포함
 - 환경 셋업 스크립트, 공통 픽스처, 모킹 전략
 
 ## Collaboration touchpoints
+
 - **Implementation Executor**에 필요한 코드 스니펫, 가이드라인, 테스트 샘플 공유
 - **QA & Automation Sentinel**에 테스트 더블 구성 요소(MSW, spy, stub)를 전달
 - **Release & Feedback Synthesizer**와 릴리즈 템플릿, 배포 스크립트를 최신 상태로 유지
 
 ## Testing alignment
+
 - FIRST 원칙의 **Fast/Repeatable** 달성을 위해 로컬/CI 환경 차이를 최소화
 - 테스트 피라미드 하단(유닛 테스트) 강화를 위한 유틸성 함수, 공용 픽스처 관리
 - 비결정론적 테스트를 방지하기 위해 시간/랜덤 의존 모듈에 대한 고정 헬퍼 제공
@@ -30,6 +36,7 @@
 ## Input/Output Samples
 
 ### Input Example
+
 ```json
 {
   "task": {
@@ -45,6 +52,7 @@
 This agent maintains a living inventory of test infrastructure to prevent duplication and ensure consistency:
 
 #### MSW Handler Registry
+
 ```json
 {
   "handlers": [
@@ -69,6 +77,7 @@ This agent maintains a living inventory of test infrastructure to prevent duplic
 ```
 
 #### Fixture & Utility Location Reference
+
 ```
 src/__tests__/
 ├── utils.ts                 ← Central testing utilities
@@ -83,17 +92,19 @@ src/__tests__/
 ```
 
 #### Mocking Convention Matrix
-| Concern | Method | Tool | Example |
-|---------|--------|------|---------|
-| **API Calls** | Intercept | MSW (handlers.ts) | `getEventsHandler` in month-view test |
-| **Dates/Time** | Mock global | `vi.setSystemTime()` | Feb 1, 2025 00:00 UTC for consistency |
-| **Random Data** | Seed | `faker.seed(42)` | Deterministic user names in fixtures |
-| **Component Side-effects** | Replace | `vi.fn()` or `vi.spyOn()` | Mock `setNotification()` callback |
-| **localStorage** | Stub | `vi.mock('localStorage')` | Preset theme preference |
+
+| Concern                    | Method      | Tool                      | Example                               |
+| -------------------------- | ----------- | ------------------------- | ------------------------------------- |
+| **API Calls**              | Intercept   | MSW (handlers.ts)         | `getEventsHandler` in month-view test |
+| **Dates/Time**             | Mock global | `vi.setSystemTime()`      | Feb 1, 2025 00:00 UTC for consistency |
+| **Random Data**            | Seed        | `faker.seed(42)`          | Deterministic user names in fixtures  |
+| **Component Side-effects** | Replace     | `vi.fn()` or `vi.spyOn()` | Mock `setNotification()` callback     |
+| **localStorage**           | Stub        | `vi.mock('localStorage')` | Preset theme preference               |
 
 #### Example: Calendar Month-View Feature
 
 **Input**: Task descriptor
+
 ```json
 {
   "taskId": "TASK-002-CAL-MONTHVIEW",
@@ -105,18 +116,27 @@ src/__tests__/
 ```
 
 **Output**: Context brief
+
 ```json
 {
   "contextBrief": {
     "featureName": "Calendar Month View",
     "relatedFiles": [
-      {"path": "src/utils/dateUtils.ts", "export": "getMonthDates", "type": "util"},
-      {"path": "src/hooks/useCalendarView.ts", "export": "useCalendarView", "type": "hook"},
-      {"path": "src/__tests__/unit/easy.dateUtils.spec.ts", "type": "test"}
+      { "path": "src/utils/dateUtils.ts", "export": "getMonthDates", "type": "util" },
+      { "path": "src/hooks/useCalendarView.ts", "export": "useCalendarView", "type": "hook" },
+      { "path": "src/__tests__/unit/easy.dateUtils.spec.ts", "type": "test" }
     ],
     "mswHandlers": [
-      {"name": "getEventsHandler", "scenarios": ["happy path", "error 500"], "location": "src/__mocks__/handlers.ts"},
-      {"name": "getHolidaysHandler", "scenarios": ["korea holidays"], "location": "src/__mocks__/handlers.ts"}
+      {
+        "name": "getEventsHandler",
+        "scenarios": ["happy path", "error 500"],
+        "location": "src/__mocks__/handlers.ts"
+      },
+      {
+        "name": "getHolidaysHandler",
+        "scenarios": ["korea holidays"],
+        "location": "src/__mocks__/handlers.ts"
+      }
     ],
     "testUtilities": ["mockDate()", "renderWithProviders()", "waitForAsync()"],
     "mockStrategy": "MSW for API calls, vi.setSystemTime() for date/timezone validation",
@@ -128,7 +148,7 @@ src/__tests__/
       "files": ["src/__tests__/utils.ts"],
       "utilities": ["mockDate()", "mockHolidays()"],
       "convention": "easy.*.spec.ts for simple, medium.*.spec.ts for complex",
-      "coverage": {"target": 80, "minimum": 70}
+      "coverage": { "target": 80, "minimum": 70 }
     },
     "integration": {
       "mswHandlers": ["src/__mocks__/handlers.ts"],
@@ -158,19 +178,23 @@ src/__tests__/
 ### When to Add New Test Assets
 
 **Add MSW Handler**:
+
 - New API endpoint introduced
 - Existing handler needs new scenario (error case, pagination, etc.)
 - Action: Update `src/__mocks__/handlers.ts`, add to registry above
 
 **Add Test Utility**:
+
 - Repeated setup pattern appears in 3+ tests
 - Action: Extract to `src/__tests__/utils.ts`, document in matrix above
 
 **Add Fixture**:
+
 - Test data changes per feature (e.g., holiday list, event schema evolution)
 - Action: Create or update `src/__mocks__/response/*.json`, reference in contextBrief
 
 ## Metrics & alerts
+
 - 컨텍스트 브리프 제공 시간(Work Decomposer & Planner 요청 → Implementation Executor 수신)
 - 재사용률(제안된 자산이 실제 커밋에 반영된 비율)
 - 테스트 실패 원인 중 환경 문제 비중

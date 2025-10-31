@@ -90,7 +90,18 @@ export default [
 
       // Prettier rules
       ...prettierConfig.rules,
-      'prettier/prettier': 'error',
+      'prettier/prettier': [
+        'error',
+        {
+          singleQuote: true,
+          endOfLine: 'lf',
+          printWidth: 100,
+          tabWidth: 2,
+          useTabs: false,
+          semi: true,
+          trailingComma: 'es5',
+        },
+      ],
 
       // Storybook rules
       ...storybookPlugin.configs.recommended.rules,

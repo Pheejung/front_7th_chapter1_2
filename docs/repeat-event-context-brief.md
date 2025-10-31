@@ -2,7 +2,7 @@
 
 > **작성**: 아키텍트 에이전트 (Repo & Context Orchestrator)  
 > **대상**: 개발 에이전트 (Implementation Executor)  
-> **기반**: 반복 일정 명세서 + 태스크 DAG  
+> **기반**: 반복 일정 명세서 + 태스크 DAG
 
 ---
 
@@ -28,7 +28,7 @@ export interface EventForm {
   description: string;
   location: string;
   category: string;
-  repeat: RepeatInfo;              // ← 이미 반복 정보 필드 있음!
+  repeat: RepeatInfo; // ← 이미 반복 정보 필드 있음!
   notificationTime: number;
 }
 
@@ -104,10 +104,10 @@ export const handlers = [
 // - repeatType은 주석 처리 중 (사용 준비 상태)
 
 const {
-  isRepeating,          // 반복 여부
-  repeatType,           // 반복 타입 (주석 처리됨 - Task R-001에서 활성화)
-  repeatInterval,       // 반복 간격
-  repeatEndDate,        // 반복 종료 날짜
+  isRepeating, // 반복 여부
+  repeatType, // 반복 타입 (주석 처리됨 - Task R-001에서 활성화)
+  repeatInterval, // 반복 간격
+  repeatEndDate, // 반복 종료 날짜
 } = useEventForm();
 ```
 
@@ -119,32 +119,32 @@ const {
 
 ### Phase 1: 반복 타입 선택 (Task R-001 ~ R-003)
 
-| 파일 경로 | 기존 상태 | 수정 필요 | 담당 Task |
-|-----------|----------|---------|----------|
-| `src/types.ts` | ✅ 완벽 | 확인만 | R-002 |
-| `src/utils/` | 📁 디렉토리 있음 | **repeatUtils.ts 신규 생성** | R-001 |
-| `src/hooks/useEventOperations.ts` | ✅ 있음 | **반복 저장 로직 = 기존 saveEvent 활용** | R-002 |
-| `src/App.tsx` | ✅ 있음 | **repeatType select UI 활성화** | R-003 |
-| `src/__mocks__/handlers.ts` | ✅ 완벽 | **반복 필드 처리 자동 (기존 PUT/POST 활용)** | R-002 |
+| 파일 경로                         | 기존 상태        | 수정 필요                                    | 담당 Task |
+| --------------------------------- | ---------------- | -------------------------------------------- | --------- |
+| `src/types.ts`                    | ✅ 완벽          | 확인만                                       | R-002     |
+| `src/utils/`                      | 📁 디렉토리 있음 | **repeatUtils.ts 신규 생성**                 | R-001     |
+| `src/hooks/useEventOperations.ts` | ✅ 있음          | **반복 저장 로직 = 기존 saveEvent 활용**     | R-002     |
+| `src/App.tsx`                     | ✅ 있음          | **repeatType select UI 활성화**              | R-003     |
+| `src/__mocks__/handlers.ts`       | ✅ 완벽          | **반복 필드 처리 자동 (기존 PUT/POST 활용)** | R-002     |
 
 **중요**: EventForm.tsx 따로 없음! 모든 폼이 **App.tsx에 통합**되어 있음
 
 ### Phase 2: 반복 일정 표시 (Task R-004 ~ R-005)
 
-| 파일 경로 | 기존 상태 | 수정 필요 | 담당 Task |
-|-----------|----------|---------|----------|
-| `src/utils/` | 📁 디렉토리 있음 | **getRepeatIcon() 함수 추가** | R-004 |
-| `src/App.tsx` | ✅ 있음 | **캘린더/테이블에 반복 아이콘 렌더링** | R-005 |
-| `src/__tests__/` | ✅ 있음 | **반복 테스트 케이스 추가** | R-004, R-005 |
+| 파일 경로        | 기존 상태        | 수정 필요                              | 담당 Task    |
+| ---------------- | ---------------- | -------------------------------------- | ------------ |
+| `src/utils/`     | 📁 디렉토리 있음 | **getRepeatIcon() 함수 추가**          | R-004        |
+| `src/App.tsx`    | ✅ 있음          | **캘린더/테이블에 반복 아이콘 렌더링** | R-005        |
+| `src/__tests__/` | ✅ 있음          | **반복 테스트 케이스 추가**            | R-004, R-005 |
 
 ### Phase 3: 반복 수정/삭제 (Task R-006 ~ R-012)
 
-| 파일 경로 | 기존 상태 | 수정 필요 | 담당 Task |
-|-----------|----------|---------|----------|
-| `src/utils/repeatUtils.ts` | � 신규 | **generateRepeatEvents(), updateRepeatEvents() 추가** | R-006, R-007, R-008 |
-| `src/hooks/useEventOperations.ts` | ✅ 있음 | **기존 deleteEvent 활용 + 반복 옵션 처리** | R-010, R-011 |
-| `src/App.tsx` | ✅ 있음 | **수정/삭제 모달 UI 추가** | R-009, R-012 |
-| `src/__mocks__/handlers.ts` | ✅ 완벽 | **반복 필드 처리 자동** | R-007~R-011 |
+| 파일 경로                         | 기존 상태 | 수정 필요                                             | 담당 Task           |
+| --------------------------------- | --------- | ----------------------------------------------------- | ------------------- |
+| `src/utils/repeatUtils.ts`        | � 신규    | **generateRepeatEvents(), updateRepeatEvents() 추가** | R-006, R-007, R-008 |
+| `src/hooks/useEventOperations.ts` | ✅ 있음   | **기존 deleteEvent 활용 + 반복 옵션 처리**            | R-010, R-011        |
+| `src/App.tsx`                     | ✅ 있음   | **수정/삭제 모달 UI 추가**                            | R-009, R-012        |
+| `src/__mocks__/handlers.ts`       | ✅ 완벽   | **반복 필드 처리 자동**                               | R-007~R-011         |
 
 ---
 
@@ -176,6 +176,7 @@ src/__mocks__/
 ```
 
 **필요한 추가 작업**:
+
 - `반복 일정 저장` MSW mock handler 추가 (R-002)
 - `반복 일정 수정` MSW mock handler 추가 (R-007, R-008)
 - `반복 일정 삭제` MSW mock handler 추가 (R-010, R-011)
@@ -198,6 +199,7 @@ src/__mocks__/
 ## 📋 Task별 파일 할당
 
 ### TASK-R-001: 반복 타입 유틸 함수
+
 **파일 생성**: `src/utils/repeatUtils.ts`
 
 ```typescript
@@ -213,7 +215,9 @@ export const isLeapYear = (year: number): boolean => { ... }
 ---
 
 ### TASK-R-002: RepeatEvent 타입 정의 & 훅
-**수정 파일**: 
+
+**수정 파일**:
+
 - `src/types.ts` (기존 RepeatInfo 확인 후 필요시 확장)
 - `src/hooks/useEventOperations.ts` (반복 저장 로직 추가)
 - `src/__mocks__/handlers.ts` (반복 저장 API mock)
@@ -223,7 +227,9 @@ export const isLeapYear = (year: number): boolean => { ... }
 ---
 
 ### TASK-R-003: 일정 폼 UI 확장
-**수정 파일**: 
+
+**수정 파일**:
+
 - `src/components/EventForm.tsx` (반복 타입 select 추가)
 
 **테스트**: `src/__tests__/medium.repeatForm.spec.tsx` (신규)
@@ -231,19 +237,20 @@ export const isLeapYear = (year: number): boolean => { ... }
 ---
 
 ### TASK-R-004: 반복 아이콘 렌더 함수
+
 **파일 추가**: `src/utils/repeatUtils.ts`에 함수 추가
 
 ```typescript
 export const getRepeatIcon = (repeatType: RepeatType): string => {
   const icons: Record<RepeatType, string> = {
-    'none': '',
-    'daily': '📅',
-    'weekly': '🔄',
-    'monthly': '📆',
-    'yearly': '🗓️',
+    none: '',
+    daily: '📅',
+    weekly: '🔄',
+    monthly: '📆',
+    yearly: '🗓️',
   };
   return icons[repeatType] || '';
-}
+};
 ```
 
 **테스트**: `src/__tests__/unit/easy.repeatIcon.spec.ts` (신규)
@@ -251,7 +258,9 @@ export const getRepeatIcon = (repeatType: RepeatType): string => {
 ---
 
 ### TASK-R-005: Calendar 컴포넌트 확장
-**수정 파일**: 
+
+**수정 파일**:
+
 - `src/components/Calendar.tsx` (아이콘 렌더링 로직)
 
 **테스트**: `src/__tests__/medium.calendarRepeat.spec.tsx` (신규)
@@ -259,6 +268,7 @@ export const getRepeatIcon = (repeatType: RepeatType): string => {
 ---
 
 ### TASK-R-006: 반복 일정 생성 로직
+
 **파일 추가**: `src/utils/repeatUtils.ts`에 함수 추가
 
 ```typescript
@@ -313,7 +323,8 @@ export const handlers = [
 ];
 ```
 
-**핵심**: 
+**핵심**:
+
 - ✅ 반복 필드 처리는 **이미 자동으로 됨** (generic Event 타입)
 - ✅ 추가 mock 작성 불필요
 - ✅ **반복 로직은 클라이언트에서 처리** (generateRepeatEvents 등)
@@ -323,6 +334,7 @@ export const handlers = [
 ## 📐 코드 컨벤션 (기존 프로젝트 준수)
 
 ### 파일 명명 규칙
+
 ```
 테스트: [난이도].[기능].spec.[ts|tsx]
   ✅ easy.dateUtils.spec.ts
@@ -335,15 +347,16 @@ export const handlers = [
 ```
 
 ### 테스트 패턴 (AAA)
+
 ```typescript
 describe('테스트 대상', () => {
   it('should do something', () => {
     // Arrange
     const input = ...;
-    
+
     // Act
     const result = func(input);
-    
+
     // Assert
     expect(result).toBe(...);
   });
@@ -351,6 +364,7 @@ describe('테스트 대상', () => {
 ```
 
 ### 타입스크립트 규칙
+
 ```typescript
 // ✅ 명시적 타입
 function isLeapYear(year: number): boolean { ... }
@@ -364,6 +378,7 @@ type RepeatType = 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
 ## ⚡ 개발 에이전트를 위한 Quick Start
 
 ### Task R-001 시작 체크리스트
+
 - [ ] `src/utils/repeatUtils.ts` 파일 생성
 - [ ] 테스트 먼저 작성: `src/__tests__/unit/easy.repeatUtils.spec.ts`
 - [ ] RED: 테스트 실패 확인
@@ -372,6 +387,7 @@ type RepeatType = 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
 - [ ] 커밋: `feat: add repeat type validation utilities`
 
 ### 실행 명령어
+
 ```bash
 # 테스트 실행
 pnpm test -- src/__tests__/unit/easy.repeatUtils.spec.ts
