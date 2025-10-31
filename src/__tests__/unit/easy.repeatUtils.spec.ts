@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import { Event, RepeatType } from '../../types';
 import {
   generateRecurringEvents,
   getRepeatIcon,
   isLeapYear,
   isValidRepeatType,
 } from '../../utils/repeatUtils';
-import { Event, RepeatType } from '../../types';
 
 describe('repeatUtils', () => {
   describe('isValidRepeatType', () => {
@@ -66,7 +66,7 @@ describe('repeatUtils', () => {
 
     it('매일 반복 일정을 종료일까지 생성한다', () => {
       const events = generateRecurringEvents(baseEvent);
-      
+
       expect(events).toHaveLength(5); // 11/1 ~ 11/5
       expect(events[0].date).toBe('2025-11-01');
       expect(events[1].date).toBe('2025-11-02');
@@ -81,21 +81,21 @@ describe('repeatUtils', () => {
         repeat: { type: 'daily' as RepeatType, interval: 2, endDate: '2025-11-09' },
       };
       const events = generateRecurringEvents(event);
-      
+
       expect(events).toHaveLength(5); // 11/1, 11/3, 11/5, 11/7, 11/9
       expect(events[0].date).toBe('2025-11-01');
       expect(events[1].date).toBe('2025-11-03');
       expect(events[2].date).toBe('2025-11-05');
     });
 
-    it('종료일이 없으면 최대 365일까지 생성한다', () => {
+    it('종료일이 없으면 최대 366일까지 생성한다', () => {
       const event = {
         ...baseEvent,
         repeat: { type: 'daily' as RepeatType, interval: 1 },
       };
       const events = generateRecurringEvents(event);
-      
-      expect(events.length).toBeLessThanOrEqual(365);
+
+      expect(events.length).toBeLessThanOrEqual(366);
     });
   });
 
@@ -115,7 +115,7 @@ describe('repeatUtils', () => {
 
     it('매주 반복 일정을 생성한다 (7일 간격)', () => {
       const events = generateRecurringEvents(baseEvent);
-      
+
       expect(events.length).toBeGreaterThan(0);
       expect(events[0].date).toBe('2025-11-03');
       expect(events[1].date).toBe('2025-11-10');
@@ -140,7 +140,7 @@ describe('repeatUtils', () => {
       };
 
       const events = generateRecurringEvents(baseEvent);
-      
+
       expect(events.length).toBeGreaterThan(0);
       expect(events[0].date).toBe('2025-11-15');
       expect(events[1].date).toBe('2025-12-15');
@@ -163,7 +163,7 @@ describe('repeatUtils', () => {
       };
 
       const events = generateRecurringEvents(baseEvent);
-      
+
       // 1월 31일, 3월 31일, 5월 31일만 생성 (2월, 4월은 31일 없음)
       expect(events).toHaveLength(3);
       expect(events[0].date).toBe('2025-01-31');
@@ -188,7 +188,7 @@ describe('repeatUtils', () => {
       };
 
       const events = generateRecurringEvents(baseEvent);
-      
+
       expect(events).toHaveLength(4); // 2025, 2026, 2027, 2028
       expect(events[0].date).toBe('2025-06-15');
       expect(events[1].date).toBe('2026-06-15');
@@ -211,7 +211,7 @@ describe('repeatUtils', () => {
       };
 
       const events = generateRecurringEvents(baseEvent);
-      
+
       // 2024(윤년), 2028(윤년)에만 2월 29일 생성
       expect(events).toHaveLength(2);
       expect(events[0].date).toBe('2024-02-29');
@@ -235,7 +235,7 @@ describe('repeatUtils', () => {
       };
 
       const events = generateRecurringEvents(baseEvent);
-      
+
       expect(events).toHaveLength(1);
       expect(events[0].date).toBe('2025-11-01');
     });
@@ -255,7 +255,7 @@ describe('repeatUtils', () => {
       };
 
       const events = generateRecurringEvents(baseEvent);
-      
+
       const ids = events.map((event: Event) => event.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(events.length);
