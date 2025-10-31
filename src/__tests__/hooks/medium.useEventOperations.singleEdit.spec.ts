@@ -65,7 +65,7 @@ describe('반복 일정 단일 수정 (R-007)', () => {
 
     await waitFor(() => {
       const events = result.current.events;
-      
+
       // 11/02 일정만 수정되었는지 확인
       const modifiedEvent = events.find((e) => e.date === '2025-11-02');
       expect(modifiedEvent?.title).toBe('수정된 회의');
@@ -129,7 +129,7 @@ describe('반복 일정 단일 수정 (R-007)', () => {
 
     await waitFor(() => {
       const modifiedEvent = result.current.events.find((e) => e.id === firstEvent.id);
-      
+
       // parentId는 변경되지 않아야 함
       expect(modifiedEvent?.parentId).toBe(originalParentId);
       expect(modifiedEvent?.title).toBe('수정된 주간 회의');

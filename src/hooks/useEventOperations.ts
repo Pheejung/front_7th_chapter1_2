@@ -46,18 +46,21 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
   const saveEvent = async (eventData: Event | EventForm) => {
     try {
       let response;
-      // editing이 true이거나, id와 parentId가 모두 있으면 수정으로 처리 (단일 수정 케이스)
+      // 수정 케이스 판단:
+      // 1. editing=true: 일반 수정
+      // 2. editing=false이지만 id와 parentId가 있음: 반복 일정의 단일 수정
       const hasId = 'id' in eventData && eventData.id;
       const hasParentId = 'parentId' in eventData && eventData.parentId;
-      const isUpdating = editing || (!editing && hasId && hasParentId);
+      const isSingleEditFromRecurring = !editing && hasId && hasParentId;
+      const isUpdating = editing || isSingleEditFromRecurring;
 
       if (isUpdating && hasId) {
-        // 수정 시: 반복 일정의 단일 수정을 위해 repeat.type을 'none'으로 변경
+        // 수정 로직: 반복 일정의 단일 수정 시 repeat.type을 'none'으로 변경하여 독립적인 일정으로 전환
         const eventToUpdate = {
           ...eventData,
           repeat: {
             ...eventData.repeat,
-            type: 'none' as const, // 단일 일정으로 변경
+            type: 'none' as const,
           },
         };
 
@@ -72,7 +75,8 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
           response = { ok: true } as Response;
         } else {
           // POST 요청 시 id 제거 (서버가 생성)
-          const { id, ...eventWithoutId } = eventData as Event;
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id: _id, ...eventWithoutId } = eventData as Event;
           response = await fetch('/api/events', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
