@@ -2,6 +2,7 @@ import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 import { Event, EventForm } from '../types';
+import { generateRecurringEvents } from '../utils/repeatUtils';
 
 export const useEventOperations = (editing: boolean, onSave?: () => void) => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -31,11 +32,38 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
           body: JSON.stringify(eventData),
         });
       } else {
-        response = await fetch('/api/events', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(eventData),
-        });
+        // 반복 일정인 경우 여러 개의 이벤트 생성
+        if (eventData.repeat.type !== 'none') {
+          // 임시 ID를 가진 이벤트 생성하여 반복 일정 생성
+          const tempEvent: Event = {
+            ...eventData,
+            id: 'id' in eventData ? eventData.id : String(Date.now()),
+          };
+
+          const recurringEvents = generateRecurringEvents(tempEvent);
+
+          // 각 반복 일정을 개별적으로 저장
+          for (const event of recurringEvents) {
+            const res = await fetch('/api/events', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(event),
+            });
+
+            if (!res.ok) {
+              throw new Error('Failed to save recurring event');
+            }
+          }
+
+          response = { ok: true } as Response;
+        } else {
+          // 단일 일정
+          response = await fetch('/api/events', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(eventData),
+          });
+        }
       }
 
       if (!response.ok) {

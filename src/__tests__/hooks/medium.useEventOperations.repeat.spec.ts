@@ -51,7 +51,7 @@ describe('useEventOperations - 반복 일정', () => {
     // 생성된 이벤트들이 올바른 날짜를 가지는지 확인
     const events = result.current.events;
     const dates = events.map((e: Event) => e.date).sort();
-    
+
     expect(dates).toContain('2025-11-01');
     expect(dates).toContain('2025-11-02');
     expect(dates).toContain('2025-11-03');
