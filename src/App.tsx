@@ -30,6 +30,7 @@ import {
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 
+import { RepeatEditModal } from './components/RepeatEditModal';
 import { useCalendarView } from './hooks/useCalendarView.ts';
 import { useEventForm } from './hooks/useEventForm.ts';
 import { useEventOperations } from './hooks/useEventOperations.ts';
@@ -104,8 +105,9 @@ function App() {
     editEvent,
   } = useEventForm();
 
-  const { events, saveEvent, deleteEvent } = useEventOperations(Boolean(editingEvent), () =>
-    setEditingEvent(null)
+  const { events, saveEvent, deleteEvent, updateAllRecurringEvents } = useEventOperations(
+    Boolean(editingEvent),
+    () => setEditingEvent(null)
   );
 
   const { notifications, notifiedEvents, setNotifications } = useNotifications(events);
@@ -114,6 +116,8 @@ function App() {
 
   const [isOverlapDialogOpen, setIsOverlapDialogOpen] = useState(false);
   const [overlappingEvents, setOverlappingEvents] = useState<Event[]>([]);
+  const [isRepeatEditModalOpen, setIsRepeatEditModalOpen] = useState(false);
+  const [pendingEventData, setPendingEventData] = useState<Event | EventForm | null>(null);
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -145,6 +149,20 @@ function App() {
       notificationTime,
     };
 
+    // 반복 일정 수정 시 모달 표시
+    // parentId가 있는 경우: 이미 생성된 반복 일정 그룹
+    // parentId가 없지만 repeat.type이 'none'이 아닌 경우: 단독 반복 일정 (첫 생성 시)
+    const isEditingRecurringEvent =
+      editingEvent &&
+      editingEvent.repeat.type !== 'none' &&
+      (editingEvent.parentId || editingEvent.id);
+
+    if (isEditingRecurringEvent) {
+      setPendingEventData(eventData);
+      setIsRepeatEditModalOpen(true);
+      return;
+    }
+
     const overlapping = findOverlappingEvents(eventData, events);
     if (overlapping.length > 0) {
       setOverlappingEvents(overlapping);
@@ -153,6 +171,46 @@ function App() {
       await saveEvent(eventData);
       resetForm();
     }
+  };
+
+  // 이 일정만 수정
+  const handleEditSingle = async () => {
+    if (pendingEventData) {
+      const overlapping = findOverlappingEvents(pendingEventData, events);
+      if (overlapping.length > 0) {
+        setOverlappingEvents(overlapping);
+        setIsOverlapDialogOpen(true);
+      } else {
+        await saveEvent(pendingEventData);
+        resetForm();
+      }
+    }
+    setIsRepeatEditModalOpen(false);
+    setPendingEventData(null);
+  };
+
+  // 모든 반복 일정 수정
+  const handleEditAll = async () => {
+    if (pendingEventData && editingEvent) {
+      if (editingEvent.parentId) {
+        // parentId가 있는 경우: 반복 일정 그룹 전체 수정
+        await updateAllRecurringEvents(editingEvent.parentId, {
+          title: pendingEventData.title,
+          startTime: pendingEventData.startTime,
+          endTime: pendingEventData.endTime,
+          description: pendingEventData.description,
+          location: pendingEventData.location,
+          category: pendingEventData.category,
+          notificationTime: pendingEventData.notificationTime,
+        });
+      } else {
+        // parentId가 없는 경우: 단일 반복 일정 (일반 수정)
+        await saveEvent(pendingEventData);
+      }
+      resetForm();
+    }
+    setIsRepeatEditModalOpen(false);
+    setPendingEventData(null);
   };
 
   const renderWeekView = () => {
@@ -640,6 +698,16 @@ function App() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <RepeatEditModal
+        open={isRepeatEditModalOpen}
+        onClose={() => {
+          setIsRepeatEditModalOpen(false);
+          setPendingEventData(null);
+        }}
+        onEditSingle={handleEditSingle}
+        onEditAll={handleEditAll}
+      />
 
       {notifications.length > 0 && (
         <Stack position="fixed" top={16} right={16} spacing={2} alignItems="flex-end">
