@@ -52,6 +52,16 @@ const categories = ['업무', '개인', '가족', '기타'];
 
 const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
 
+/**
+ * 이벤트 제목에 반복 아이콘을 추가하여 반환
+ * @param event - 이벤트 객체
+ * @returns 아이콘이 포함된 제목 문자열
+ */
+const formatEventTitle = (event: Event): string => {
+  const icon = getRepeatIcon(event.repeat.type);
+  return icon ? `${icon} ${event.title}` : event.title;
+};
+
 const notificationOptions = [
   { value: 1, label: '1분 전' },
   { value: 10, label: '10분 전' },
@@ -206,7 +216,7 @@ function App() {
                                 noWrap
                                 sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}
                               >
-                                {getRepeatIcon(event.repeat.type)} {event.title}
+                                {formatEventTitle(event)}
                               </Typography>
                             </Stack>
                           </Box>
@@ -293,7 +303,7 @@ function App() {
                                       noWrap
                                       sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}
                                     >
-                                      {getRepeatIcon(event.repeat.type)} {event.title}
+                                      {formatEventTitle(event)}
                                     </Typography>
                                   </Stack>
                                 </Box>
@@ -544,7 +554,7 @@ function App() {
                         fontWeight={notifiedEvents.includes(event.id) ? 'bold' : 'normal'}
                         color={notifiedEvents.includes(event.id) ? 'error' : 'inherit'}
                       >
-                        {getRepeatIcon(event.repeat.type)} {event.title}
+                        {formatEventTitle(event)}
                       </Typography>
                     </Stack>
                     <Typography>{event.date}</Typography>
