@@ -116,6 +116,64 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
     }
   };
 
+  /**
+   * 반복 일정의 모든 이벤트를 일괄 수정
+   *
+   * parentId가 동일한 모든 반복 일정을 찾아서 지정된 필드만 업데이트합니다.
+   * 각 이벤트의 date, parentId, repeat 설정은 유지됩니다.
+   *
+   * @param parentId - 반복 일정 그룹 ID
+   * @param updates - 수정할 필드들 (부분 업데이트)
+   * @throws {Error} parentId에 해당하는 이벤트가 없을 경우
+   * @example
+   * updateAllRecurringEvents('parent-123', {
+   *   title: '수정된 제목',
+   *   location: '새 장소'
+   * });
+   */
+  const updateAllRecurringEvents = async (parentId: string, updates: Partial<EventForm>) => {
+    try {
+      // 1. parentId가 같은 모든 반복 이벤트 조회
+      const eventsToUpdate = events.filter((event) => event.parentId === parentId);
+
+      if (eventsToUpdate.length === 0) {
+        throw new Error('No recurring events found with this parentId');
+      }
+
+      // 2. 각 이벤트를 병렬로 업데이트
+      const updatePromises = eventsToUpdate.map(async (event) => {
+        // 변경되지 않아야 할 필드들을 명시적으로 유지
+        const updatedEvent = {
+          ...event,
+          ...updates,
+          date: event.date, // 각 이벤트의 날짜는 고유하게 유지
+          parentId: event.parentId, // 반복 일정 그룹 관계 유지
+          repeat: event.repeat, // 반복 설정 유지
+        };
+
+        const response = await fetch(`/api/events/${event.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedEvent),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to update event ${event.id}`);
+        }
+
+        return response.json();
+      });
+
+      // 3. 모든 업데이트가 완료될 때까지 대기
+      await Promise.all(updatePromises);
+      await fetchEvents();
+      enqueueSnackbar('모든 반복 일정이 수정되었습니다.', { variant: 'success' });
+    } catch (error) {
+      console.error('Error updating recurring events:', error);
+      enqueueSnackbar('반복 일정 수정 실패', { variant: 'error' });
+    }
+  };
+
   async function init() {
     await fetchEvents();
     enqueueSnackbar('일정 로딩 완료!', { variant: 'info' });
@@ -126,5 +184,5 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { events, fetchEvents, saveEvent, deleteEvent };
+  return { events, fetchEvents, saveEvent, deleteEvent, updateAllRecurringEvents };
 };
