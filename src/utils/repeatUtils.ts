@@ -194,7 +194,7 @@ const getNextOccurrence = (
 export const generateRecurringEvents = (baseEvent: Event): Event[] => {
   const { repeat, date: startDateStr } = baseEvent;
 
-  // 반복하지 않는 경우 원본만 반환
+  // 반복하지 않는 경우 원본만 반환 (parentId 없음)
   if (repeat.type === 'none') {
     return [baseEvent];
   }
@@ -213,6 +213,9 @@ export const generateRecurringEvents = (baseEvent: Event): Event[] => {
   let eventIndex = 0;
   let iterations = 0;
 
+  // 반복 일정의 그룹 ID (원본 이벤트의 ID)
+  const parentId = baseEvent.id;
+
   while (currentDate <= endDate && iterations < MAX_ITERATIONS) {
     iterations++;
 
@@ -221,6 +224,7 @@ export const generateRecurringEvents = (baseEvent: Event): Event[] => {
         ...baseEvent,
         id: `${baseEvent.id}-repeat-${eventIndex}`,
         date: formatDate(currentDate),
+        parentId, // 반복 일정 그룹 ID 설정
       });
       eventIndex++;
     }
