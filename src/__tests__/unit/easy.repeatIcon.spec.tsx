@@ -1,8 +1,8 @@
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { getRepeatIcon } from '../../utils/repeatUtils';
 import { Event } from '../../types';
+import { getRepeatIcon } from '../../utils/repeatUtils';
 
 describe('반복 아이콘 표시', () => {
   describe('getRepeatIcon 함수', () => {

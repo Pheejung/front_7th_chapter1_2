@@ -45,6 +45,7 @@ import {
   getWeeksAtMonth,
 } from './utils/dateUtils';
 import { findOverlappingEvents } from './utils/eventOverlap';
+import { getRepeatIcon } from './utils/repeatUtils';
 import { getTimeErrorMessage } from './utils/timeValidation';
 
 const categories = ['업무', '개인', '가족', '기타'];
@@ -205,7 +206,7 @@ function App() {
                                 noWrap
                                 sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}
                               >
-                                {event.title}
+                                {getRepeatIcon(event.repeat.type)} {event.title}
                               </Typography>
                             </Stack>
                           </Box>
@@ -292,7 +293,7 @@ function App() {
                                       noWrap
                                       sx={{ fontSize: '0.75rem', lineHeight: 1.2 }}
                                     >
-                                      {event.title}
+                                      {getRepeatIcon(event.repeat.type)} {event.title}
                                     </Typography>
                                   </Stack>
                                 </Box>
@@ -543,7 +544,7 @@ function App() {
                         fontWeight={notifiedEvents.includes(event.id) ? 'bold' : 'normal'}
                         color={notifiedEvents.includes(event.id) ? 'error' : 'inherit'}
                       >
-                        {event.title}
+                        {getRepeatIcon(event.repeat.type)} {event.title}
                       </Typography>
                     </Stack>
                     <Typography>{event.date}</Typography>
