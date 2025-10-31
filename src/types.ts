@@ -20,4 +20,5 @@ export interface EventForm {
 
 export interface Event extends EventForm {
   id: string;
+  parentId?: string; // 반복 일정의 그룹 ID
 }
