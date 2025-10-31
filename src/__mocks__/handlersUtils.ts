@@ -92,3 +92,32 @@ export const setupMockHandlerDeletion = () => {
     })
   );
 };
+
+// ! R-007: 반복 일정 수정 테스트를 위한 핸들러
+export const setupMockHandlerRepeatModification = (initEvents = [] as Event[]) => {
+  const mockEvents: Event[] = [...initEvents];
+
+  server.use(
+    http.get('/api/events', () => {
+      return HttpResponse.json({ events: mockEvents });
+    }),
+    http.post('/api/events', async ({ request }) => {
+      const newEvent = (await request.json()) as Event;
+      newEvent.id = String(mockEvents.length + 1);
+      mockEvents.push(newEvent);
+      return HttpResponse.json(newEvent, { status: 201 });
+    }),
+    http.put('/api/events/:id', async ({ params, request }) => {
+      const { id } = params;
+      const updatedEvent = (await request.json()) as Event;
+      const index = mockEvents.findIndex((event) => event.id === id);
+
+      if (index !== -1) {
+        mockEvents[index] = { ...mockEvents[index], ...updatedEvent };
+        return HttpResponse.json(mockEvents[index]);
+      }
+
+      return new HttpResponse(null, { status: 404 });
+    })
+  );
+};

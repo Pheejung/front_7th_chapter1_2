@@ -46,21 +46,37 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
   const saveEvent = async (eventData: Event | EventForm) => {
     try {
       let response;
-      if (editing) {
-        response = await fetch(`/api/events/${(eventData as Event).id}`, {
+      // editing이 true이거나, id와 parentId가 모두 있으면 수정으로 처리 (단일 수정 케이스)
+      const hasId = 'id' in eventData && eventData.id;
+      const hasParentId = 'parentId' in eventData && eventData.parentId;
+      const isUpdating = editing || (!editing && hasId && hasParentId);
+
+      if (isUpdating && hasId) {
+        // 수정 시: 반복 일정의 단일 수정을 위해 repeat.type을 'none'으로 변경
+        const eventToUpdate = {
+          ...eventData,
+          repeat: {
+            ...eventData.repeat,
+            type: 'none' as const, // 단일 일정으로 변경
+          },
+        };
+
+        response = await fetch(`/api/events/${eventData.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(eventData),
+          body: JSON.stringify(eventToUpdate),
         });
       } else {
         if (eventData.repeat.type !== 'none') {
           await saveRecurringEvents(eventData);
           response = { ok: true } as Response;
         } else {
+          // POST 요청 시 id 제거 (서버가 생성)
+          const { id, ...eventWithoutId } = eventData as Event;
           response = await fetch('/api/events', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(eventData),
+            body: JSON.stringify(eventWithoutId),
           });
         }
       }
@@ -71,7 +87,7 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
 
       await fetchEvents();
       onSave?.();
-      enqueueSnackbar(editing ? '일정이 수정되었습니다.' : '일정이 추가되었습니다.', {
+      enqueueSnackbar(isUpdating ? '일정이 수정되었습니다.' : '일정이 추가되었습니다.', {
         variant: 'success',
       });
     } catch (error) {

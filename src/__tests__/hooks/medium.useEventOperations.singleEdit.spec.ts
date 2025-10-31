@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { setupMockHandlerCreation } from '../../__mocks__/handlersUtils';
+import { setupMockHandlerRepeatModification } from '../../__mocks__/handlersUtils';
 import { useEventOperations } from '../../hooks/useEventOperations';
 
 const enqueueSnackbarFn = vi.fn();
@@ -18,7 +18,7 @@ vi.mock('notistack', async () => {
 
 describe('반복 일정 단일 수정 (R-007)', () => {
   it('반복 일정 중 하나만 수정 시 해당 일정만 변경되어야 한다', async () => {
-    setupMockHandlerCreation();
+    setupMockHandlerRepeatModification();
 
     const { result } = renderHook(() => useEventOperations(false));
 
@@ -87,7 +87,7 @@ describe('반복 일정 단일 수정 (R-007)', () => {
   });
 
   it('단일 수정 시 parentId는 유지되어야 한다', async () => {
-    setupMockHandlerCreation();
+    setupMockHandlerRepeatModification();
 
     const { result } = renderHook(() => useEventOperations(false));
 
@@ -137,7 +137,7 @@ describe('반복 일정 단일 수정 (R-007)', () => {
   });
 
   it('단일 수정 시 repeat 정보는 none으로 변경되어야 한다', async () => {
-    setupMockHandlerCreation();
+    setupMockHandlerRepeatModification();
 
     const { result } = renderHook(() => useEventOperations(false));
 
